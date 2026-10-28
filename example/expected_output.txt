@@ -1,0 +1,24 @@
+12 units, 6 permitted codes
+
+[FAIL] quote contamination  (1)
+         u05: evidence: contains '|'
+[FAIL] code membership  (1)
+         u08: code: 'delay' not in code list
+[FAIL] empty codes  (1)
+         —: code 'timeline' has no units
+[FAIL] categorical values  (1)
+         u09: acknowledged: 'Partially acknowledged' not permitted
+[FAIL] required evidence  (1)
+         u04: outcome='not adopted' but evidence is empty
+[FAIL] impossible pairs  (1)
+         u06: acknowledged='none' with outcome='adopted'
+[FAIL] quote boundaries  (2)
+         u07: claim: no terminal punctuation
+         u11: claim: starts on an enumeration marker
+[FAIL] duplicates  (2)
+         —: id 'u09' appears 2 times
+         —: identical text in units ['u09', 'u12']
+
+10 finding(s) across 12 units (83.3%)
+Every unit was checked. A sampling audit covers a fraction and
+is the only way to check the judgements these rules cannot express.

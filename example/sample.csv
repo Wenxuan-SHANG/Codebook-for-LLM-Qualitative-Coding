@@ -1,0 +1,13 @@
+id,source,claim,evidence,code,acknowledged,outcome
+u01,consult_a.txt,The ramp gradient is too steep for wheelchairs.,The gradient will be reduced to 1:15 in the revised drawing.,access,full,adopted
+u02,consult_a.txt,Night works should stop before 22:00.,Works will end at 21:30 from phase 2 onward.,noise,full,partly adopted
+u03,consult_a.txt,The cost estimate omits maintenance.,Maintenance is out of scope for this consultation.,cost,full,not adopted
+u04,consult_a.txt,Residents were given only five days to respond.,,process,partial,not adopted
+u05,table_b.txt,The crossing needs a signal.,Under review by the traffic office.|The verge is too narrow for a footway.,safety,partial,no traceable outcome
+u06,table_b.txt,Please publish the survey data.,,process,none,adopted
+u07,table_b.txt,The works will block the bus stop,A temporary stop will be provided 40m north.,access,full,partly adopted
+u08,table_b.txt,The schedule is unrealistic.,Nothing in the response addresses the schedule.,delay,full,no traceable outcome
+u09,minutes_c.txt,Dust control is inadequate.,Please supplement in line with members' comments.,noise,Partially acknowledged,no traceable outcome
+u09,minutes_c.txt,Lighting spill affects bedrooms.,Please supplement in line with members' comments.,noise,partial,no traceable outcome
+u11,minutes_c.txt,(3) the hoarding should be set back from the kerb.,Please supplement in line with members' comments.,safety,partial,no traceable outcome
+u12,minutes_c.txt,Dust control is inadequate.,Please supplement in line with members' comments.,noise,partial,no traceable outcome

@@ -1,0 +1,7 @@
+# One permitted code per line.
+access
+cost
+noise
+process
+safety
+timeline
