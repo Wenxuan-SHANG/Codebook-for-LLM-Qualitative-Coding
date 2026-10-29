@@ -1,151 +1,169 @@
-# Where LLM-assisted qualitative coding breaks
+# A pilot procedure for LLM-assisted qualitative coding
 
-*[日本語の概要](README.ja.md)*
+*[日本語の概要](README.ja.md)* · *[Pitfalls in detail](PITFALLS.md)* · *[Rule checker: scan.py](scan.py)*
 
-Seven failure modes in LLM-assisted coding of text corpora, each with a detection method and the cost of missing it.
+A thousand documents, a hundred million characters, several coding dimensions. Hand-coding will not finish. An LLM will — but then the question is whether its output can be trusted.
 
-They share one property: **a single coder plus human review cannot find any of them.** Not because the reviewer is careless — because each failure is internally consistent with the rules as written, so checking the output against the codebook returns "correct."
+The answer proposed here: **before production coding, run a pilot whose purpose is to produce a codebook that is demonstrably reproducible.** Not one that you and your coder agree on — one that a stranger, holding only the text, applies the same way. Once that is established, production coding needs only two roles.
 
-Every number below comes from one study: 163 coded units from Chinese-language government documents of a regulatory review process, September 2026, Claude as the production coder, ChatGPT (GPT-5.6) and Gemini (3.1 Pro) as independent validators. One corpus, one language, two vendors. Treat the numbers as existence proofs, not as effect sizes. Each section says how to test the claim in your own setting.
+```mermaid
+flowchart TD
+    S0["0 · Sample, and hold out one third"]
+    S1["1 · Draft CB1 from theory"]
+    S2["2 · Initial coder codes, researcher checks<br/>revise → CB2"]
+    S3["3 · Problem: is CB2 reproducible?<br/>give it to a stranger AI"]
+    S4["4 · Revise: bring the letter to the intent<br/>→ CB3"]
+    S5["5 · Final test on the held-out third"]
+    L["Record as limitation"]
+    N["Revise, re-test on new clean data"]
+    F["Final codebook"]
+    P["Production coding<br/>two roles · 30% audit"]
 
----
-
-## 1. Your value domain is missing the cell for "no evidence either way"
-
-A code's value set is usually written by imagining the cases you have seen. If your categories are `adopted / partially adopted / not adopted`, all three presuppose that the record says something. The common case in many corpora is that the record says nothing at all — the demand was raised, and the response simply does not mention it.
-
-With no cell for that case, it collapses into the nearest one. Here it collapsed into `not adopted`, which is not a neutral error: it converts silence into refusal, and silence and refusal mean opposite things.
-
-**Detection.** For each coded value, write the sentence "the evidence for this is ___." If one of your values completes that sentence with "there is none," it is doing double duty. Then count: of the units assigned the suspect value, how many have a quotable piece of evidence in the record?
-
-**Observed.** Of 91 units coded `not adopted`, 22 (24%) carried explicit refusal with reasons. The other 69 (76%) had no trace of any kind. Adding `no traceable outcome` as a fourth value moved agreement with an independent coder from **8.7% to 90%**.
-
-**Cost of missing it.** The original distribution supported the finding "76% of demands were rejected." That finding was an artifact of a missing cell.
-
----
-
-## 2. A self-consistent error looks like a correct one
-
-You write a codebook. You code with it. You review your own coding against it. Everything matches, because you are applying the same reading of the rules that produced the coding.
-
-This is not a diligence problem and more review does not fix it. Human review detects *inconsistency* — the same situation coded two ways. It cannot detect a *consistent misreading*, because consistency is the only thing it checks.
-
-**Detection.** One independent coder who did not help write the codebook, given the codebook text and nothing else. Not a second opinion from someone you briefed; the point is that they have access only to what a stranger would have.
-
-**Observed.** Failure mode 1 sat undetected through the author's full review pass. It surfaced on the first run by a coder who had only the document.
-
-**The distinction worth keeping.** A coder who helped write the manual encodes its *intent*. A coder holding only the text encodes its *letter*. The gap between them is the reproducibility of the manual — and reproducibility is a property of the letter, because the letter is all anyone else receives.
+    S0 --> S1 --> S2 --> S3 --> S4 --> S5
+    S5 -- "pass" --> F
+    S5 -- "fail" --> L --> F
+    S5 -- "fail" --> N --> F
+    F --> P
+```
 
 ---
 
-## 3. Running batches in one session changes the output
+# Part 1 · Pilot
 
-Split a corpus into batches and run them sequentially in one conversation, and the coder begins matching its own earlier output rather than re-reading the rules. Later batches show falling variance — which looks like the model settling down, and is in fact the model copying itself.
+## Step 0 — Sample, then hold out a third before touching anything
 
-**Detection.** Re-run two batches from the middle and end of the sequence in fresh sessions. Compare each against a researcher-verified baseline. If the fresh runs disagree with the sequential runs, the sequential runs are path-dependent.
+Draw a pilot sample stratified by material type. Then, **before any coding**, set aside one third in the same proportions. It is not opened until step 5.
 
-**Observed.** Same model, same prompt, same data; only the session differed.
+> e.g. Pilot of 27 documents: type A 18, type B 9.
+> Held out: 9 documents (A 6, B 3).
+> Development: 18 documents (A 12, B 6).
 
-| batch | same session | fresh session |
+**Hold out whole documents, not units.** Units from the same document share context and often share a single response. Split at unit level, and a rule learned from one unit is effectively being tested on its sibling.
+
+**Stratify by type.** Different materials fail in different ways — a meeting record and a court judgment do not go wrong in the same places. A held-out set that lacks a type cannot test it.
+
+**Fix the pass thresholds now**, per coding dimension. A threshold chosen after seeing results is not a threshold.
+
+## Step 1 — Draft the first codebook, CB(1), from theory
+
+Derive the dimensions and their values from your theoretical framework — for example: claim type, whether the claim was acknowledged, whether it was adopted.
+
+Check every value set for a missing cell: for each value, complete *"the evidence for this is ___."* If a value would honestly complete it with *"there is none,"* it is quietly absorbing a case that needs its own value. → [Pitfall 1](PITFALLS.md#1-your-value-domain-is-missing-the-cell-for-no-evidence-either-way)
+
+## Step 2 — Initial coder codes, researcher checks, revise → CB(2)
+
+The **initial coder** (an AI) codes the development set. The researcher checks it. Revise the codebook; repeat for several rounds.
+
+- Give the coder the **full codebook, verbatim**. A summary you write yourself drops exactly the rules you thought minor — which are the ones edge cases turn on.
+- Run each batch in a **fresh session**. → [Pitfall 3](PITFALLS.md#3-running-batches-in-one-session-changes-the-output)
+- **Version** every change that alters a coding decision. Never overwrite a version that has coded anything.
+
+## Step 3 — The problem: none of this shows the codebook is reproducible
+
+Both the researcher and the initial coder took part in designing the codebook. They code by its **intent**. When they agree, it may only mean they think alike — and if the coder makes the same mistake every time, the researcher, reading the same intent into the same rules, is unlikely to notice. A consistent error looks correct. → [Pitfall 2](PITFALLS.md#2-a-self-consistent-error-looks-like-a-correct-one)
+
+This matters for two concrete reasons:
+
+1. In production, only a sample is audited. **Everything else is constrained by the text of the codebook and nothing more.**
+2. Anyone trying to replicate the study **has only the text.**
+
+So the codebook has to be tested on its **letter**, not its intent.
+
+**Give it to a stranger.** A **test coder** — a different AI that had no part in writing the codebook — receives the codebook text and nothing else. Compare its coding with yours, layer by layer:
+
+| layer | question |
+|---|---|
+| analysis unit | does it find and delimit the same units in the raw text? |
+| category | does it assign each unit to the same category? |
+| values | does it tag the same values — acknowledged, adopted? |
+
+**Test the units first.** If the two of you have cut the text into different units, agreement on the later layers is meaningless: you are comparing different things.
+
+> **What this caught, in one study.** The outcome dimension had three values — adopted, partly adopted, not adopted — all of which assume the record says something. Most often it said nothing at all, and those cases had been coded *not adopted*. The researcher had reviewed every one of them and seen no problem. The test coder disagreed on its first run. Adding a value for *no traceable outcome* moved agreement from **8.7% to 90%**.
+
+## Step 4 — Revise again: bring the letter closer to the intent → CB(3)
+
+Sort each disagreement before acting on it:
+
+| kind | means | action |
 |---|---|---|
-| 5 | 25% | 70% |
-| 8 | **0%** | **100%** |
+| test coder misread a clear rule | the codebook is fine | none |
+| rule is ambiguous | two readings are both defensible | clarify |
+| rule is missing | the situation is not covered | add |
+| value set is incomplete | no value fits | add a value |
 
-Batch 8 in the sequential run returned a single value 20 times out of 20, zero variance.
+Only the last three justify a revision. Re-code the development set. **CB(3)** is the candidate for the final version.
 
-**Implication.** Per-batch isolation is a requirement, not a preference. This also means an API loop is methodologically *safer* than manual pasting, not just faster: each call is a cold context by construction.
+## Step 5 — Final test on the held-out third
 
----
+This data has never shaped the codebook. Two codings are compared:
 
-## 4. Sampling audits cannot see systematic defects
+- **the researcher's baseline** — coded by the researcher, or coded by the initial coder and fully checked by the researcher;
+- **the test coder's coding** — codebook text only.
 
-A stratified sample is built to estimate a rate. Technical and consistency defects are not distributed at a rate — they cluster, in one file format, one document type, one node created late. Random sampling is at its weakest precisely where defects are concentrated.
+Two conditions make the comparison valid:
 
-**Detection.** Run both. A sampling audit for judgment, a full programmatic scan for anything a rule can express:
+- **The baseline is fixed first.** If the researcher sees the test coder's answers before settling their own, the baseline drifts toward them and the test is void.
+- **The test coder has never seen the held-out documents.** If the one used in step 3 read any of them — during the unit test, say — use a different one here.
 
-- does any quote contain a field delimiter from the source table?
-- is every code in the permitted set?
-- does any code have zero units?
-- does every value that requires negative evidence have a non-empty evidence field?
-- are there impossible combinations across dimensions?
-- does any quote start mid-sentence or end without terminal punctuation?
-- do any two units share an ID, or identical text?
+Compare per dimension and per material type.
 
-**Observed.**
+**Pass →** final codebook, **CB(4)**.
 
-| defect class | total | found by 30% sample | found by full scan |
-|---|---|---|---|
-| quote contaminated by adjacent table cell | 14 | 6 | **14** |
-| code misassignment | 5 | **0** | **5** |
+**Fail →** two legitimate options:
 
-**These two methods see different things and neither substitutes for the other.**
+- **Record the gaps as limitations** and finalize CB(3) as it stands.
+- **Revise, then re-test on new clean data.** The held-out third is spent once you revise in response to it. The natural source of new data is the first production batch — but only if the **test coder** codes a slice of it (40–60 units is enough). The production audit alone does not substitute: it compares the researcher with the initial coder, who already knows the intent, so it measures accuracy, not reproducibility.
 
----
+**Not legitimate:** revise and re-test on the same held-out third.
 
-## 5. A quote that passed through the model is not a quote
-
-If the coder outputs the quoted text, you cannot prove the text is verbatim. The model may silently normalize, truncate, or smooth it, and the failure is invisible — a plausible paraphrase reads exactly like an accurate quotation.
-
-**The fix is structural, not a matter of instruction.** Have the model output only a *locator* — the first 15–30 characters, copied exactly. A program then finds that string in the source file and extracts the span by character offset, with the end determined by explicit boundary rules (terminal punctuation, enumeration markers, table delimiters).
-
-The quoted text then never passes through the model at all. It is a slice of the file. Fidelity stops being a matter of trust.
-
-**Detection, if you already have model-emitted quotes.** For each one, check that it occurs in the source file as an exact substring after whitespace normalization. Anything that fails is either a paraphrase or an extraction error; both matter.
-
-**Observed.** Before the boundary rules, 23 of 163 evidence quotes contained a table field delimiter, meaning they had run past the cell boundary into an adjacent cell — in several cases absorbing the *next* unit's text into the current unit's evidence, which inflates how responsive the record appears. After: 0 of 163.
+> **In one study.** 63 held-out units. Acknowledged 90.5%, category 71.4%, outcome 69.8%. Two of three fell short; three gaps in the criteria were identified. The first option was taken — no criterion was changed, and the gaps went into the record.
 
 ---
 
-## 6. Validating a codebook on the data that shaped it measures nothing
+# Part 2 · Production coding
 
-Codebook revision is fitting. Each rule you add after seeing a disagreement fits the rule to that case. Measure agreement afterwards on the same material and you get a number that reflects the fitting, not the codebook.
+**Two roles only:** the researcher and the initial coder. The test coder's job ended with the pilot.
 
-Split the corpus before you begin: a development set you may revise against, and a held-out set you may not touch. Validate on the held-out set once.
+1. **The initial coder codes everything.**
+2. **A program scans every unit** for anything a rule can express — quotes spilling across table cells, codes outside the permitted set, a value that requires evidence recorded without any. Fix these first. A sample cannot find them, because they cluster. → [Pitfall 4](PITFALLS.md#4-sampling-audits-cannot-see-systematic-defects) · [scan.py](scan.py)
+3. **The researcher audits a 30% sample**, stratified by material type.
 
-**And then the hard part: do not fix what it reveals.** The moment you revise in response to held-out results, that set becomes a development set, and you have no clean sample left. The split is not recoverable — you cannot un-see it. Record the gaps as limitations and leave the criteria alone.
+**Result:**
 
-**Observed.** 100 units were used for revision; 63 were never touched. Measured on the 63:
+| | | action |
+|---|---|---|
+| **pass** | | accept |
+| **fail** | **systematic** — the same kind of disagreement recurs within a material type or dimension | check that stratum in full; revise the codebook (new version) |
+| | **random** — scattered, no pattern | correct case by case |
 
-| dimension | agreement |
-|---|---|
-| acknowledgement | 90.5% |
-| category assignment | 71.4% |
-| outcome | 69.8% |
+Audit material type by material type as each finishes, not all at the end. A systematic failure then shows up after sixty units rather than a thousand.
 
-Two of three fell below the thresholds set in advance. Three criterion gaps were identified. **None were fixed.** The version that followed changed no coding criterion; it added the limitations to the record.
+**Production coding is also the largest out-of-sample test of the codebook** — none of this data shaped it. The 30% audit measures how well the codebook performs on new material. It does not measure reproducibility, for the reason given in step 5.
 
-**Why this is the right trade.** A codebook reported at 90% after fitting to all available data tells a reader nothing. One reported at 69.8% on data it never saw tells them exactly how much to trust it.
+## Notes for heavy volume
 
----
-
-## 7. Two models agreeing is not intercoder reliability
-
-The temptation is obvious: run two models from different vendors, compute kappa, report it as reliability. It does not hold, for three independent reasons.
-
-**They are not independent.** Kappa assumes two independent judgments. Commercial LLMs share overwhelming training data and inherited conventions. Different vendors reduce the correlation; nothing available removes it.
-
-**Agreement is not correctness.** Two models can converge on the same misreading of the same rule. A high agreement rate is then *bad* news, and harder to notice than disagreement would have been.
-
-**Humans defer to consensus.** Where two models agree, a reviewer treats the item as settled and moves on. Shared blind spots become exactly the items nobody checks.
-
-**What to do instead.** Name the roles by function, not by model count:
-
-| role | definition |
-|---|---|
-| **production coder** | codes the full corpus; output enters the dataset |
-| **auditor** | the researcher; stratified sample; final authority on every unit |
-| **validation coder** | holds the codebook text only; output never enters the dataset, used solely to measure reproducibility |
-
-Report two separate figures and never merge them: researcher-vs-production-coder disagreement (an audit statistic), and researcher-baseline-vs-validation-coder agreement (a reproducibility statistic). Neither is intercoder reliability. Say so.
-
-**A related inference that does not hold.** "The researcher is accountable for the coding" does not entail "the researcher must code every unit by hand." The first is a claim about responsibility, the second about execution. Hand-coding at scale is not more consistent than a rule-following machine — it is less. Authority is exercised through the audit and the final judgment, not through volume.
+- **Batches of about 20, each in an independent context** — an API loop or separate subtasks. In one session, the coder starts copying its own earlier answers. → [Pitfall 3](PITFALLS.md#3-running-batches-in-one-session-changes-the-output)
+- **Quotes by locator.** Have the coder output only the first 15–30 characters of each passage; a program extracts the quote from the source file by character offset. The quoted text never passes through the model. → [Pitfall 5](PITFALLS.md#5-a-quote-that-passed-through-the-model-is-not-a-quote)
+- **Pin the model** and record its identifier. Changing it midway is changing the coder.
+- **A material type the pilot never covered** gets a small test-coder check before production continues.
+- **Categories change only by the researcher's decision**, at the boundary between material types, with date and reason logged. The coder flags poor fits; it does not invent categories.
 
 ---
 
-## What this does not tell you
+## Is this agreement intercoder reliability?
 
-Everything above was observed in one corpus, one language, four document types, with models current in September 2026. The detection methods should transfer; the magnitudes should not be assumed to.
+**No, and no kappa is computed.** Two LLMs share overwhelming training data; they are not independent judges, which kappa requires. The agreement between the researcher's baseline and the test coder is used for one thing only: to test whether the codebook **transmits** — whether its text alone produces the intended coding. → [Pitfall 7](PITFALLS.md#7-two-models-agreeing-is-not-intercoder-reliability)
 
-Three gaps were left open rather than papered over, and remain open: a criterion for distinguishing proposals from pure inquiries was applied inconsistently in both directions; the boundary between full and partial outcomes was never defined; and the basis for category assignment — by the action demanded, or by the topic discussed — was used consistently in practice but never written down. Each is visible in the section 6 numbers.
+Report two figures, never merged:
 
-The thresholds used here were derived from this study's own audit data and are not transferable. Derive your own, from your own pilot, **before** you start — a threshold set after seeing results is not a threshold.
+| figure | between | measures |
+|---|---|---|
+| audit disagreement | researcher vs initial coder | how much the researcher corrected |
+| reproducibility | researcher baseline vs test coder | whether the codebook works for someone else |
+
+---
+
+## Where the examples come from
+
+One study: 163 coded units from Chinese-language government documents of a regulatory review, September 2026. Initial coder: Claude. Test coders: ChatGPT (GPT-5.6) and Gemini (3.1 Pro). One corpus, one language. **The procedure should transfer; the numbers should not be assumed to.**
